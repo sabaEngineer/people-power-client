@@ -9,6 +9,7 @@ const emptyValues: ContactFormValues = {
   firstName: '',
   lastName: '',
   birthday: '',
+  birthdayReminders: [],
   phone: '',
   socialUrl: '',
   description: '',
@@ -52,6 +53,9 @@ export default function NewContactPage() {
           firstName: values.firstName,
           lastName: values.lastName,
           birthday: values.birthday || undefined,
+          birthdayReminders: values.birthday
+            ? values.birthdayReminders
+            : undefined,
           phone: values.phone || undefined,
           socialUrl: values.socialUrl || undefined,
           description: values.description || undefined,

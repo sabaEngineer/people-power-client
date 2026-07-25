@@ -1,13 +1,27 @@
 import { useState } from 'react';
-import type { Fact, FactType } from '../lib/types';
-import { FACT_TYPE_LABELS } from '../lib/types';
+import type { Fact, FactType, ReminderTiming } from '../lib/types';
+import {
+  DEFAULT_FACT_REMINDERS,
+  FACT_TYPE_LABELS,
+  REMINDER_TIMING_OPTIONS,
+} from '../lib/types';
 
 interface FactsListProps {
   facts: Fact[];
-  onAdd: (data: { type: FactType; content: string; reminderDate?: string }) => Promise<void>;
+  onAdd: (data: {
+    type: FactType;
+    content: string;
+    reminderDate?: string;
+    reminderTimings?: ReminderTiming[];
+  }) => Promise<void>;
   onUpdate: (
     factId: string,
-    data: { type?: FactType; content?: string; reminderDate?: string | null },
+    data: {
+      type?: FactType;
+      content?: string;
+      reminderDate?: string | null;
+      reminderTimings?: ReminderTiming[];
+    },
   ) => Promise<void>;
   onDelete: (factId: string) => Promise<void>;
 }
@@ -19,6 +33,7 @@ export default function FactsList({ facts, onAdd, onUpdate, onDelete }: FactsLis
   const [type, setType] = useState<FactType>('PAIN');
   const [content, setContent] = useState('');
   const [reminderDate, setReminderDate] = useState('');
+  const [reminderTimings, setReminderTimings] = useState<ReminderTiming[]>([]);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -26,8 +41,29 @@ export default function FactsList({ facts, onAdd, onUpdate, onDelete }: FactsLis
     setType('PAIN');
     setContent('');
     setReminderDate('');
+    setReminderTimings([]);
     setShowForm(false);
     setEditingId(null);
+  };
+
+  const handleReminderDateChange = (date: string) => {
+    if (!date) {
+      setReminderDate('');
+      setReminderTimings([]);
+      return;
+    }
+    setReminderDate(date);
+    setReminderTimings((prev) =>
+      prev.length > 0 ? prev : DEFAULT_FACT_REMINDERS,
+    );
+  };
+
+  const toggleTiming = (timing: ReminderTiming) => {
+    setReminderTimings((prev) =>
+      prev.includes(timing)
+        ? prev.filter((t) => t !== timing)
+        : [...prev, timing],
+    );
   };
 
   const handleSubmit = async () => {
@@ -39,12 +75,14 @@ export default function FactsList({ facts, onAdd, onUpdate, onDelete }: FactsLis
           type,
           content: content.trim(),
           reminderDate: reminderDate || null,
+          reminderTimings: reminderDate ? reminderTimings : [],
         });
       } else {
         await onAdd({
           type,
           content: content.trim(),
           reminderDate: reminderDate || undefined,
+          reminderTimings: reminderDate ? reminderTimings : undefined,
         });
       }
       resetForm();
@@ -58,8 +96,16 @@ export default function FactsList({ facts, onAdd, onUpdate, onDelete }: FactsLis
     setType(fact.type);
     setContent(fact.content);
     setReminderDate(fact.reminderDate?.slice(0, 10) ?? '');
+    setReminderTimings(fact.reminderTimings ?? []);
     setShowForm(true);
   };
+
+  const timingLabels = (timings: ReminderTiming[]) =>
+    timings
+      .map(
+        (t) => REMINDER_TIMING_OPTIONS.find((o) => o.value === t)?.label ?? t,
+      )
+      .join(', ');
 
   return (
     <div className="space-y-4">
@@ -103,10 +149,36 @@ export default function FactsList({ facts, onAdd, onUpdate, onDelete }: FactsLis
             <input
               type="date"
               value={reminderDate}
-              onChange={(e) => setReminderDate(e.target.value)}
+              onChange={(e) => handleReminderDateChange(e.target.value)}
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
             />
           </div>
+          {reminderDate && (
+            <div>
+              <label className="block text-xs text-slate-500 mb-2">
+                When to remind
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {REMINDER_TIMING_OPTIONS.map((opt) => {
+                  const selected = reminderTimings.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => toggleTiming(opt.value)}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                        selected
+                          ? 'bg-indigo-100 border-indigo-300 text-indigo-800'
+                          : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="flex gap-2">
             <button
               type="button"
@@ -146,7 +218,9 @@ export default function FactsList({ facts, onAdd, onUpdate, onDelete }: FactsLis
                 {fact.reminderDate && (
                   <p className="text-xs text-slate-400 mt-2">
                     Reminder: {fact.reminderDate.slice(0, 10)}
-                    {fact.reminderSent && ' (sent)'}
+                    {fact.reminderTimings?.length
+                      ? ` · ${timingLabels(fact.reminderTimings)}`
+                      : ''}
                   </p>
                 )}
               </div>

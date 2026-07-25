@@ -53,7 +53,7 @@ export default function LandingPage() {
           />
           <Feature
             title="Never miss a birthday"
-            description="Automatic reminders one week before and on the day."
+            description="Choose reminders for the day of, the day before, a week before, or a month before."
           />
           <Feature
             title="Organize with tags"

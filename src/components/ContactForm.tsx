@@ -1,10 +1,15 @@
-import type { Tag } from '../lib/types';
+import type { BirthdayReminderType, Tag } from '../lib/types';
+import {
+  BIRTHDAY_REMINDER_OPTIONS,
+  DEFAULT_BIRTHDAY_REMINDERS,
+} from '../lib/types';
 import TagPicker from './TagPicker';
 
 export interface ContactFormValues {
   firstName: string;
   lastName: string;
   birthday: string;
+  birthdayReminders: BirthdayReminderType[];
   phone: string;
   socialUrl: string;
   description: string;
@@ -32,6 +37,27 @@ export default function ContactForm({
 }: ContactFormProps) {
   const set = (patch: Partial<ContactFormValues>) =>
     onChange({ ...values, ...patch });
+
+  const handleBirthdayChange = (birthday: string) => {
+    if (!birthday) {
+      set({ birthday: '', birthdayReminders: [] });
+      return;
+    }
+    set({
+      birthday,
+      birthdayReminders:
+        values.birthdayReminders.length > 0
+          ? values.birthdayReminders
+          : DEFAULT_BIRTHDAY_REMINDERS,
+    });
+  };
+
+  const toggleReminder = (type: BirthdayReminderType) => {
+    const selected = values.birthdayReminders.includes(type)
+      ? values.birthdayReminders.filter((t) => t !== type)
+      : [...values.birthdayReminders, type];
+    set({ birthdayReminders: selected });
+  };
 
   return (
     <form
@@ -76,7 +102,7 @@ export default function ContactForm({
           <input
             type="date"
             value={values.birthday}
-            onChange={(e) => set({ birthday: e.target.value })}
+            onChange={(e) => handleBirthdayChange(e.target.value)}
             className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
@@ -92,6 +118,36 @@ export default function ContactForm({
           />
         </div>
       </div>
+
+      {values.birthday && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Birthday reminders
+          </label>
+          <p className="text-xs text-slate-500 mb-2">
+            Choose when you want an email reminder
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {BIRTHDAY_REMINDER_OPTIONS.map((opt) => {
+              const selected = values.birthdayReminders.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleReminder(opt.value)}
+                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    selected
+                      ? 'bg-indigo-100 border-indigo-300 text-indigo-800'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">

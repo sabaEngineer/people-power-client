@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/auth';
 import { apiFetch } from '../lib/api';
-import type { Contact, FactType, Tag } from '../lib/types';
+import type { Contact, FactType, ReminderTiming, Tag } from '../lib/types';
 import ContactForm, { type ContactFormValues } from '../components/ContactForm';
 import FactsList from '../components/FactsList';
 import SocialLinks from '../components/SocialLinks';
@@ -12,6 +12,7 @@ function contactToForm(contact: Contact): ContactFormValues {
     firstName: contact.firstName,
     lastName: contact.lastName,
     birthday: contact.birthday?.slice(0, 10) ?? '',
+    birthdayReminders: contact.birthdayReminders ?? [],
     phone: contact.phone ?? '',
     socialUrl: contact.socialUrl ?? '',
     description: contact.description ?? '',
@@ -75,7 +76,8 @@ export default function ContactDetailPage() {
         body: JSON.stringify({
           firstName: values.firstName,
           lastName: values.lastName,
-          birthday: values.birthday || undefined,
+          birthday: values.birthday || null,
+          birthdayReminders: values.birthdayReminders,
           phone: values.phone || undefined,
           socialUrl: values.socialUrl || undefined,
           description: values.description || undefined,
@@ -103,6 +105,7 @@ export default function ContactDetailPage() {
     type: FactType;
     content: string;
     reminderDate?: string;
+    reminderTimings?: ReminderTiming[];
   }) => {
     if (!id) return;
     await apiFetch(`/contacts/${id}/facts`, token, {
@@ -114,7 +117,12 @@ export default function ContactDetailPage() {
 
   const handleUpdateFact = async (
     factId: string,
-    data: { type?: FactType; content?: string; reminderDate?: string | null },
+    data: {
+      type?: FactType;
+      content?: string;
+      reminderDate?: string | null;
+      reminderTimings?: ReminderTiming[];
+    },
   ) => {
     if (!id) return;
     await apiFetch(`/contacts/${id}/facts/${factId}`, token, {
