@@ -125,7 +125,7 @@ export default function ContactForm({
             Birthday reminders
           </label>
           <p className="text-xs text-slate-500 mb-2">
-            Choose when you want an email reminder
+            Choose when you want a Telegram reminder
           </p>
           <div className="flex flex-wrap gap-2">
             {BIRTHDAY_REMINDER_OPTIONS.map((opt) => {
